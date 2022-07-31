@@ -1,0 +1,18 @@
+<h1>Hello World!</h1>
+<p>This is my first webage!!</p>
+<p>This is {{first_name}}</p>
+<p>{{stuff | title}}</p>
+
+<h3>Favorite Fruits:</h3>
+{% for topping in favorite_fruits %}
+    {% if topping==34 %}
+        {{topping+100}}<br/>
+    {% else %}
+        {{topping}}<br/>
+    {% endif %}
+
+    
+{% endfor %}
+
+<br/><br/>
+{{favorite_fruits.2+10}}

@@ -1,27 +1,104 @@
 from crypt import methods
+import email
+from email.policy import default
 from flask import Flask, flash, render_template
 from flask_wtf import FlaskForm
 from importlib_metadata import method_cache
-from wtforms import StringField, SubmitField
+from sqlalchemy import null
+from wtforms import StringField, SubmitField, EmailField, IntegerField
 from wtforms.validators import DataRequired
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 
 # Create a Flask Instance
 app = Flask(__name__)
+# Add Database
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:12345678@localhost:3306/user"
+# SECRET KEY!
 app.config['SECRET_KEY'] = "my super secret key that is no one is supposed to know" #create secret key
+# Initialize The Database
+db = SQLAlchemy(app)
+
+# Create Model
+class Users(db.Model):
+    userid = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(200), nullable=False)
+    bankername = db.Column(db.String(200), nullable=False)
+    gender = db.Column(db.String(10), nullable=False)
+    userage = db.Column(db.Integer,nullable=False)
+    phonenumber = db.Column(db.String(10),nullable=False)
+    email = db.Column(db.String(200), nullable=False, unique=True)
+    loantype = db.Column(db.String(200), nullable=False)
+    loanAMT = db.Column(db.Integer,nullable=False)
+    date_added = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Create A String
+    def __repr__(self):
+        return '<Name %r>' %self.username
+
+    # userid="123456" : 用戶ID 
+    # bankername="Skye" : 銀行員帳號名稱
+    # username="Skye" : 客戶名稱
+    # gender="F": 客戶性別
+    # userage="18" : 客戶年齡
+    # phonenumber="#": 客戶電話
+    # email="#" : 客戶Email
+    # loantype="POS": 客戶申請類別
+    # loanAMT="100000" : 客戶申請金額
+    # score="80" : 客戶評估分數
+    # results=result : 加裝示範從資料庫收集的資料
 
 # Create an Form Class
 class NamerForm(FlaskForm):
     name = StringField("What's your name?", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
+# Create an Form Class
+class UserForm(FlaskForm):
+    name = StringField("Name", validators=[DataRequired()])
+    bankername = StringField("Bankername", validators=[DataRequired()])
+    gender = StringField("Gender", validators=[DataRequired()])
+    userage = IntegerField("Userage", validators=[DataRequired()])
+    phonenumber = IntegerField("phonenumber", validators=[DataRequired()])
+    email = EmailField("Email", validators=[DataRequired()])
+    loantype = StringField("loantype", validators=[DataRequired()])
+    loanAMT = IntegerField("loanAMT", validators=[DataRequired()])
+    submit = SubmitField("Submit")
 
-# Create a router decorator
-@app.route('/')
+
+
 
 # def index():
 #     return "<h1>Hello World</h1>"
 
+@app.route('/user/add',methods=['GET','POST'])
+def add_user():
+    name = None
+    form = UserForm()
+    if form.validate_on_submit():
+        user = Users.query.filter_by(email=form.email.data).first()
+        if user is None:
+            user = Users(username=form.name.data, bankername=form.bankername.data,
+            gender=form.gender.data, userage=form.userage.data, phonenumber=form.phonenumber.data, email=form.email.data, loantype=form.loantype.data, loanAMT=form.loanAMT.data )
+            db.session.add(user)
+            db.session.commit()
+        name = form.name.data
+        form.name.data = ''
+        form.bankername.data = ''
+        form.gender.data = ''
+        form.userage.data = ''
+        form.phonenumber.dat = ''
+        form.email.data = ''
+        form.loantype.data = ''
+        form.loanAMT.data = ''
+        flash("User Added Successfully!!")
+    our_users = Users.query.order_by(Users.date_added)
+    return render_template("add_user.html",form=form, name=name, our_users=our_users)
+
+# Create a router decorator
+@app.route('/')
 def index():
     first_name = "Hazel"
     stuff = "This is <strong>bold</strong> Text "

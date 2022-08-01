@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% for message in get_flashed_messages() %}
+<br>
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    Hey {{ name }} - {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+
+{% if name %}
+    <h1>表單已送出！</h1>
+    <br><br><br>
+{% for our_user in our_users%}
+    {{our_user.userid}} - {{our_user.username}} - {{our_user.email}} <br>
+{% endfor %} <br>
+    <br><br>
+{% else %}
+    <br>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        {{ form.name.label(
+            class="col-sm-2 col-form-label"
+        )}}
+        {{ form.name(class="form-control") }}
+        {{ form.bankername.label(
+            class="col-sm-2 col-form-label"
+        )}}
+        {{ form.bankername(class="form-control") }}
+        {{ form.gender.label(
+            class="col-sm-2 col-form-label"
+        )}}
+        {{ form.gender(class="form-control") }}
+        {{ form.userage.label(
+            class="col-sm-2 col-form-label"
+        )}}
+        {{ form.userage(class="form-control") }}
+        {{ form.phonenumber.label(
+            class="col-sm-2 col-form-label"
+        )}}
+        {{ form.phonenumber(class="form-control") }}
+        {{ form.email.label(
+            class="col-sm-2 col-form-label"
+        )}}
+        {{ form.email(class="form-control") }}
+        {{ form.loantype.label(
+            class="col-sm-2 col-form-label"
+        )}}
+        {{ form.loantype(class="form-control") }}
+        {{ form.loanAMT.label(
+            class="col-sm-2 col-form-label"
+        )}}
+        {{ form.loanAMT(class="form-control") }}
+        <br>
+        {{ form.submit(class="btn btn-warning") }}
+    </form>
+<br><br><br>
+{% for our_user in our_users%}
+    {{our_user.userid}} - {{our_user.username}} - {{our_user.email}}<br>
+{% endfor %} <br>
+{% endif %}
+{% endblock %}

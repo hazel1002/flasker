@@ -11,72 +11,64 @@
 {% endfor %}
 
 {% if name %}
-<h1>表單已送出！</h1>
+<h1>更新成功！</h1>
 <br><br><br>
 <table class="table table-hover table-striped table-bordered">
     {% for our_user in our_users%}
     <tr>
         <td>{{our_user.userid}}</td>
-        <td><a href="{{url_for('update', id=our_user.userid)}}">{{our_user.username}}</a></td>
+        <td>{{our_user.username}}</td>
         <td>{{our_user.email}}</td>
     </tr>
 
     {% endfor %}
 </table>
 <br><br>
+
 {% else %}
 <br>
-<h1>徵信表單</h1>
+<h1>表單更新...</h1>
 <br>
 <div class="shadow p-3 mb-5 bg-body rounded">
-    <form method="POST">
+    <form action="/update/{{name_to_update.userid}}" method="POST">
         {{ form.hidden_tag() }}
         {{ form.name.label(
         class="col-sm-2 col-form-label"
         )}}
-        {{ form.name(class="form-control") }}
+        {{ form.name(class="form-control", value=name_to_update.username) }}
         {{ form.bankername.label(
         class="col-sm-2 col-form-label"
         )}}
-        {{ form.bankername(class="form-control") }}
+        {{ form.bankername(class="form-control", value=name_to_update.bankername) }}
         {{ form.gender.label(
         class="col-sm-2 col-form-label"
         )}}
-        {{ form.gender(class="form-control") }}
+        {{ form.gender(class="form-control", value=name_to_update.gender) }}
         {{ form.userage.label(
         class="col-sm-2 col-form-label"
         )}}
-        {{ form.userage(class="form-control") }}
+        {{ form.userage(class="form-control", value=name_to_update.userage) }}
         {{ form.phonenumber.label(
         class="col-sm-2 col-form-label"
         )}}
-        {{ form.phonenumber(class="form-control") }}
+        {{ form.phonenumber(class="form-control", value=name_to_update.phonenumber) }}
         {{ form.email.label(
         class="col-sm-2 col-form-label"
         )}}
-        {{ form.email(class="form-control") }}
+        {{ form.email(class="form-control", value=name_to_update.email) }}
         {{ form.loantype.label(
         class="col-sm-2 col-form-label"
         )}}
-        {{ form.loantype(class="form-control") }}
+        {{ form.loantype(class="form-control", value=name_to_update.loantype) }}
         {{ form.loanAMT.label(
         class="col-sm-2 col-form-label"
         )}}
-        {{ form.loanAMT(class="form-control") }}
+        {{ form.loanAMT(class="form-control", value=name_to_update.loanAMT) }}
         <br>
         {{ form.submit(class="btn btn-warning") }}
     </form>
 </div>
 <br><br><br>
-<table class="table table-hover table-striped table-bordered">
-    {% for our_user in our_users%}
-    <tr>
-        <td>{{our_user.userid}}</td>
-        <td><a href="{{url_for('update', id=our_user.userid)}}">{{our_user.username}}</a></td>
-        <td>{{our_user.email}}</td>
-    </tr>
 
-    {% endfor %}
-</table>
 {% endif %}
 {% endblock %}

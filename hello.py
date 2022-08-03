@@ -1,7 +1,7 @@
 from crypt import methods
 import email
 from email.policy import default
-from flask import Flask, flash, render_template
+from flask import Flask, flash, render_template, request
 from flask_wtf import FlaskForm
 from importlib_metadata import method_cache
 from sqlalchemy import null
@@ -13,13 +13,16 @@ from datetime import datetime
 
 # Create a Flask Instance
 app = Flask(__name__)
-# Add Database
+# Add MYSQL Database
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:12345678@localhost:3306/user"
 # SECRET KEY!
 app.config['SECRET_KEY'] = "my super secret key that is no one is supposed to know" #create secret key
 # Initialize The Database
 db = SQLAlchemy(app)
+
+
+
 
 # Create Model
 class Users(db.Model):
@@ -66,6 +69,32 @@ class UserForm(FlaskForm):
     loantype = StringField("loantype", validators=[DataRequired()])
     loanAMT = IntegerField("loanAMT", validators=[DataRequired()])
     submit = SubmitField("Submit")
+
+# Update Database Record
+@app.route('/update/<int:id>',methods=['GET','POST'])
+def update(id):
+    form = UserForm()
+    name_to_update = Users.query.get_or_404(id)
+    if request.method == "POST":
+        name_to_update.username = request.form['name']
+        name_to_update.bankername = request.form['bankername']
+        name_to_update.gender = request.form['gender']
+        name_to_update.userage = request.form['userage']
+        name_to_update.phonenumber = request.form['phonenumber']
+        name_to_update.email = request.form['email']
+        name_to_update.loantype = request.form['loantype']
+        name_to_update.loanAMT = request.form['loanAMT']
+        try:
+            db.session.commit()
+            flash("User Updated Successfully!")
+            return render_template("update.html", form=form, name_to_update=name_to_update)
+        except:
+            flash("Error! Looks like there was a problem...try again!")
+            return render_template("update.html", form=form, name_to_update=name_to_update)
+    else:
+        return render_template("update.html", form=form, name_to_update=name_to_update)
+
+
 
 
 

@@ -5,23 +5,24 @@
 {% for message in get_flashed_messages() %}
 <br>
 <div class="alert alert-success alert-dismissible fade show" role="alert">
-    Hey {{ name }} - {{ message }}
+    Hey {{ name_to_update.username }} - {{ message }}
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 {% endfor %}
 
-{% if name %}
-<h1>更新成功！</h1>
-<br><br><br>
+{% if name %} 
+
+    <h1>更新成功！</h1>
+    <br><br><br>
 <table class="table table-hover table-striped table-bordered">
-    {% for our_user in our_users%}
+{% for our_user in our_users%}
     <tr>
         <td>{{our_user.userid}}</td>
         <td>{{our_user.username}}</td>
         <td>{{our_user.email}}</td>
     </tr>
 
-    {% endfor %}
+{% endfor %}
 </table>
 <br><br>
 
@@ -64,8 +65,13 @@
         class="col-sm-2 col-form-label"
         )}}
         {{ form.loanAMT(class="form-control", value=name_to_update.loanAMT) }}
+        {{ form.AMT_child.label(
+        class="col-sm-2 col-form-label"
+        )}}
+        {{ form.AMT_child(class="form-control", value=name_to_update.AMT_child) }}
         <br>
         {{ form.submit(class="btn btn-warning") }}
+        <a href="{{url_for('delete', id=id)}}" class="btn btn-danger" >Delete</a>
     </form>
 </div>
 <br><br><br>

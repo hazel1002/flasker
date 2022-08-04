@@ -2,15 +2,17 @@ from crypt import methods
 import email
 from email.policy import default
 import imp
+from inspect import Attribute
 from flask import Flask, flash, render_template, request
 from flask_wtf import FlaskForm
 from importlib_metadata import method_cache
 from sqlalchemy import null
-from wtforms import StringField, SubmitField, EmailField, IntegerField
-from wtforms.validators import DataRequired
+from wtforms import StringField, SubmitField, EmailField, IntegerField, PasswordField, BooleanField, ValidationError
+from wtforms.validators import DataRequired, EqualTo, Length
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_migrate import Migrate
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # Create a Flask Instance
@@ -40,6 +42,18 @@ class Users(db.Model):
     loanAMT = db.Column(db.Integer,nullable=False)
     AMT_child = db.Column(db.String(10))
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
+    # Do some passward stuff!
+    password_hash = db.Column(db.String(128))
+
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute!')
+    @password.setter
+    def password(self, password):
+        self.password_hash =generate_password_hash(password)
+    def verify_password(self,password):
+        return check_password_hash(self.password_hash, password)
+
 
     # Create A String
     def __repr__(self):
@@ -73,6 +87,8 @@ class UserForm(FlaskForm):
     loantype = StringField("loantype", validators=[DataRequired()])
     loanAMT = IntegerField("loanAMT", validators=[DataRequired()])
     AMT_child = StringField("AMT_child")
+    password_hash = PasswordField("Password", validators=[DataRequired(),EqualTo('password_hash2',message='Password Must Match!')])
+    password_hash2 = PasswordField("Confirm Password", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
 
@@ -137,8 +153,10 @@ def add_user():
     if form.validate_on_submit():
         user = Users.query.filter_by(email=form.email.data).first()
         if user is None:
+            # Hash the password!!!
+            hashd_pw = generate_password_hash(form.password_hash.data, "sha256") #sha256一種獲得專利的加密散列函數，它輸出一個 256 位長的值
             user = Users(username=form.name.data, bankername=form.bankername.data,
-            gender=form.gender.data, userage=form.userage.data, phonenumber=form.phonenumber.data, email=form.email.data, loantype=form.loantype.data, loanAMT=form.loanAMT.data, AMT_child=form.AMT_child.data )
+            gender=form.gender.data, userage=form.userage.data, phonenumber=form.phonenumber.data, email=form.email.data, loantype=form.loantype.data, loanAMT=form.loanAMT.data, AMT_child=form.AMT_child.data, password_hash=hashd_pw )
             db.session.add(user)
             db.session.commit()
         name = form.name.data
@@ -151,6 +169,7 @@ def add_user():
         form.loantype.data = ''
         form.loanAMT.data = ''
         form.AMT_child.data = ''
+        form.password_hash.data = ''
         flash("User Added Successfully!!")
     our_users = Users.query.order_by(Users.date_added)
     return render_template("add_user.html",form=form, name=name, our_users=our_users)

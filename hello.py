@@ -1,18 +1,22 @@
 from crypt import methods
 import email
 from email.policy import default
-import imp
 from inspect import Attribute
-from flask import Flask, flash, render_template, request
+from tkinter.tix import Tree
+from turtle import title
+from wsgiref.validate import validator
+from xmlrpc.client import DateTime
+from flask import Flask, flash, render_template, request, redirect, url_for
 from flask_wtf import FlaskForm
 from importlib_metadata import method_cache
 from sqlalchemy import null
 from wtforms import StringField, SubmitField, EmailField, IntegerField, PasswordField, BooleanField, ValidationError
 from wtforms.validators import DataRequired, EqualTo, Length
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, date
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
+from wtforms.widgets import TextArea
 
 
 # Create a Flask Instance
@@ -26,7 +30,89 @@ app.config['SECRET_KEY'] = "my super secret key that is no one is supposed to kn
 db = SQLAlchemy(app)
 migrate = Migrate(app,db)
 
+# Create a Blog Post model
+class Posts(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255))
+    content = db.Column(db.Text)
+    author = db.Column(db.String(255))
+    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
+    slug = db.Column(db.String(255))
 
+
+
+# Create a Blog Form
+class PostForm(FlaskForm):
+    title = StringField("Title", validators=[DataRequired()])
+    content = StringField("Content", validators=[DataRequired()], widget=TextArea())
+    author = StringField("Author", validators=[DataRequired()])
+    slug = StringField("Slug", validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
+@app.route('/posts')
+def posts():
+    # Grab all the posts from database
+    posts = Posts.query.order_by(Posts.date_posted)
+    return render_template("posts.html", posts=posts)
+
+@app.route('/posts/<int:id>')
+def post(id):
+    post = Posts.query.get_or_404(id)
+    return render_template('post.html',post=post)
+
+@app.route('/posts/edit/<int:id>', methods=['GET','POST'])
+def edit_post(id):
+    post = Posts.query.get_or_404(id)
+    form = PostForm()
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.author = form.author.data
+        post.slug = form.slug.data
+        post.content = form.content.data
+        # UpdateDatabase
+        db.session.add(post)
+        db.session.commit()
+        flash("Post Has Been Updated!")
+        return redirect(url_for('post',id=id))
+    form.title.data = post.title
+    form.author.data = post.author
+    form.slug.data = post.slug
+    form.content.data = post.content
+    return render_template('edit_post.html',form=form)
+
+
+# Add Post Page
+@app.route('/add-post', methods=['GET','POST'])
+def add_post():
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Posts(title=form.title.data,content=form.content.data,author=form.author.data,slug=form.slug.data)
+        # Clear The Form
+        form.title.data= ''
+        form.content.data= ''
+        form.author.data= ''
+        form.slug.data= ''
+
+        # Add post data to database
+        db.session.add(post)
+        db.session.commit()
+
+        # Return a Message
+        flash("Blog Post Submitted Successfully!")
+    # Return to the webpage
+    return render_template("add_post.html", form=form)
+
+
+# Json Thing
+@app.route('/date')
+def get_current_date():
+	favorite_pizza = {
+		"John": "Pepperoni",
+		"Mary": "Cheese",
+		"Tim": "Mushroom"
+	}
+	return favorite_pizza
+	#return {"Date": date.today()}
 
 
 # Create Model
@@ -70,6 +156,12 @@ class Users(db.Model):
     # loanAMT="100000" : 客戶申請金額
     # score="80" : 客戶評估分數
     # results=result : 加裝示範從資料庫收集的資料
+
+# Create an Form Class
+class PasswordForm(FlaskForm):
+    email = StringField("What's your email?", validators=[DataRequired()])
+    password_hash = PasswordField("What's your password?", validators=[DataRequired()])
+    submit = SubmitField("Submit")
 
 # Create an Form Class
 class NamerForm(FlaskForm):
@@ -191,6 +283,8 @@ def index():
 def user(name):
     return render_template("user.html", user_name=name)
 
+
+
 # Create Custom Error Pages
 
 # Invalid URL
@@ -203,6 +297,36 @@ def page_not_found(e):
 def page_not_found(e):
     return render_template("500.html"), 500
 
+
+# Create Password Test Page
+@app.route('/test_pw', methods=['GET', 'POST'])
+def test_pw():
+	email = None
+	password = None
+	pw_to_check = None
+	passed = None
+	form = PasswordForm()
+	# Validate Form
+	if form.validate_on_submit():
+		email = form.email.data
+		password = form.password_hash.data
+		# Clear the form
+		form.email.data = ''
+		form.password_hash.data = ''
+
+		# Lookup User By Email Address
+		pw_to_check = Users.query.filter_by(email=email).first()
+		
+		# Check Hashed Password 實務上只要這行就好
+		passed = check_password_hash(pw_to_check.password_hash, password)
+
+	return render_template("test_pw.html", 
+		email = email,
+		password = password,
+		pw_to_check = pw_to_check,
+		passed = passed,
+		form = form)
+
 # Create Name Page
 @app.route('/name', methods=['GET','POST'])
 def name():
@@ -214,5 +338,3 @@ def name():
         form.name.data = ''
         flash("Form Submitted Successfully!")
     return render_template("name.html",name = name,form = form)
-
-
